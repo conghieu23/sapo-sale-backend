@@ -19,7 +19,6 @@ import java.util.UUID;
 public class OrderService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
 
     @KafkaListener(topics = "flash-sale-order")
     private void consume(OrderRequest request) {

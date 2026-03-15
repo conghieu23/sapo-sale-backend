@@ -23,6 +23,7 @@ public class ResponseUtils {
 
     private static <T> BaseResponse<T> build(boolean success, int code, String message, T data) {
         return BaseResponse.<T>builder()
+                .success(success)
                 .code(code)
                 .message(message)
                 .data(data)

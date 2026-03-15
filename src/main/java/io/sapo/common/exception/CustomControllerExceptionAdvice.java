@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class CustomControllerExceptionAdvice {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<BaseResponse<Object>> handleException(HttpServletRequest request, Exception e) {
-        e.getStackTrace();
+        System.err.print(e.getStackTrace());
         int code = HttpStatus.INTERNAL_SERVER_ERROR.value();
         return ResponseEntity.status(code)
                 .body(ResponseUtils.error(code, e.getMessage()));

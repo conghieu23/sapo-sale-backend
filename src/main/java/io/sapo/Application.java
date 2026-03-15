@@ -20,7 +20,7 @@ public class Application {
     }
 
     private final ProductRepository productRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @PostConstruct
     public void initializeFlashSale() {
@@ -28,7 +28,7 @@ public class Application {
                 .forEach(product -> {
                     redisTemplate.opsForValue().set(
                             "flash-sale:" + product.getId(),
-                            product.getStock(),
+                            String.valueOf(product.getStock()),
                             // Simulate flash sale in 1 hour
                             Duration.ofHours(1)
                     );

@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @AllArgsConstructor
 public class FlashSaleServiceImpl implements FlashSaleService {
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
     private final KafkaTemplate<String, OrderRequest> kafkaTemplate;
     private final ProductRepository productRepository;
 
@@ -25,12 +25,13 @@ public class FlashSaleServiceImpl implements FlashSaleService {
         String boughtKey = "bought:" + request.getProductId() +
                 ":" + request.getUserId();
 
-        Integer bought = (Integer) redisTemplate.opsForValue()
-                .get(boughtKey);
-        if (bought == null) {
-            bought = 0;
+        int bought = 0;
+        if (redisTemplate.hasKey(boughtKey)) {
+            bought = Integer.valueOf(redisTemplate.opsForValue()
+                    .get(boughtKey));
+        } else {
             redisTemplate.opsForValue()
-                    .setIfAbsent(boughtKey, 0);
+                    .setIfAbsent(boughtKey, "0");
         }
         
         // Examine bought limitation;
@@ -40,9 +41,9 @@ public class FlashSaleServiceImpl implements FlashSaleService {
 
         String stockKey = "flash-sale:" + request.getProductId();
         // Examine product's stock;
-        Integer remain = (Integer) redisTemplate.opsForValue()
-                .get(stockKey);
-        if (remain == null || remain <= 0) {
+        int remain = Integer.valueOf(redisTemplate.opsForValue()
+                .get(stockKey));
+        if (remain < 1) {
             throw new CustomBusinessException("Out of stock");
         } else if (request.getQuantity() > remain) {
             throw new CustomBusinessException("Over stock");
@@ -50,10 +51,10 @@ public class FlashSaleServiceImpl implements FlashSaleService {
 
         // Decrease product's stock in redis;
         redisTemplate.opsForValue()
-                .set(stockKey, remain - request.getQuantity());
+                .decrement(stockKey, request.getQuantity());
         // Increase bought;
         redisTemplate.opsForValue()
-                .set(boughtKey, bought + request.getQuantity());
+                .increment(boughtKey, request.getQuantity());
 
         // Queue order;
         produce(request);
